@@ -1,2 +1,2 @@
-# PowerShell-Grep-Xaml
-Grep-Xaml Script
+# Grep-Xaml
+XPath式を用いてXAMLファイル内を検索します。
