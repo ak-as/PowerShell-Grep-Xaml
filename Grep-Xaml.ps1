@@ -127,6 +127,23 @@ function FindParentElement
 	return $null
 }
 
+function CreateNamespaceTable
+{
+	Param
+	(
+		[Parameter(Position=0, Mandatory=$true)]
+		[ValidateNotNullOrEmpty()]
+		[string[]]
+		$Path
+	)
+
+	$NamespaceTable = @{}
+	([xml](cat $_)).get_FirstChild().get_Attributes() |
+		?{ $_.get_Name() -like 'xmlns:*' } |
+		%{ $NamespaceTable[$_.get_Name().Substring(6)] = $_.get_Value() }
+	return $NamespaceTable
+}
+
 $PREDEFINED_ITEMS = @{
 
 	"#Path" = @{
@@ -228,12 +245,25 @@ foreach ($Item in $Items)
 	}
 }
 
-Select-Xml -Path $Path -XPath $XPath | select $SelectItems | ? $Filter
 
 
-
+Resolve-Path $Path |
+%{
+	$NamespaceTable = CreateNamespaceTable $_
+	if ($NamespaceTable.Count)
+	{
+		$Results = Select-Xml -Path $_ -XPath $XPath -Namespace $NamespaceTable
+	}
+	else
+	{
+		$Results = Select-Xml -Path $_ -XPath $XPath
+	}
+	$Results | select $SelectItems | ? $Filter
+}
 
 # Grep-Xaml -p Main.xaml -xp "//*[name()='Variable']" -i "#FileName","#Name","Name","x:TypeArguments","Default","#InCommentOut","#DisplayNamePath","#ElementPath" | ogv
+
+
 
 
 
